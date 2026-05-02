@@ -14,9 +14,57 @@ import {
   Menu,
   X,
   User as UserIcon,
-  RefreshCw
+  RefreshCw,
+  Check,
+  Info,
+  AlertTriangle,
+  CheckCircle
 } from 'lucide-react';
 import type { User, UserRole } from '../App';
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  read: boolean;
+  type: 'info' | 'success' | 'warning';
+}
+
+const MOCK_NOTIFICATIONS: Record<UserRole, Notification[]> = {
+  Student: [
+    { id: '1', title: 'Başvuru Güncellendi', message: 'Yatay geçiş başvurunuz ön inceleme aşamasına geçti.', time: '5 dk önce', read: false, type: 'info' },
+    { id: '2', title: 'Belge Onaylandı', message: 'Yüklediğiniz transkript belgesi onaylandı.', time: '2 saat önce', read: false, type: 'success' },
+    { id: '3', title: 'Eksik Belge', message: 'Başvurunuz için dil yeterlilik belgesi gereklidir.', time: '1 gün önce', read: true, type: 'warning' },
+  ],
+  OIDB: [
+    { id: '1', title: 'Yeni Başvuru', message: '3 yeni yatay geçiş başvurusu inceleme bekliyor.', time: '10 dk önce', read: false, type: 'info' },
+    { id: '2', title: 'İtiraz Alındı', message: 'Ahmet Yılmaz başvuru sonucuna itiraz etti.', time: '1 saat önce', read: false, type: 'warning' },
+    { id: '3', title: 'Dönem Hatırlatma', message: 'Başvuru değerlendirme süresi 3 gün sonra sona eriyor.', time: '3 saat önce', read: true, type: 'warning' },
+  ],
+  YDYO: [
+    { id: '1', title: 'Dil Değerlendirmesi', message: '2 yeni dil yeterlilik değerlendirmesi bekliyor.', time: '15 dk önce', read: false, type: 'info' },
+    { id: '2', title: 'Değerlendirme Tamamlandı', message: 'Fatma Şahin dil değerlendirmesi tamamlandı.', time: '4 saat önce', read: true, type: 'success' },
+  ],
+  YGK: [
+    { id: '1', title: 'Yeni Paket', message: 'OIDB\'den 5 başvuruluk yeni değerlendirme paketi geldi.', time: '30 dk önce', read: false, type: 'info' },
+    { id: '2', title: 'İntibak Onayı', message: 'Bilgisayar Mühendisliği intibak tablosu onaylandı.', time: '2 saat önce', read: false, type: 'success' },
+    { id: '3', title: 'Sıralama Güncellendi', message: 'Elektrik-Elektronik bölümü sıralaması güncellendi.', time: '1 gün önce', read: true, type: 'info' },
+  ],
+  Dean: [
+    { id: '1', title: 'Onay Bekliyor', message: '2 aday paketi dekanlık onayı bekliyor.', time: '1 saat önce', read: false, type: 'info' },
+    { id: '2', title: 'Kurul Bildirimi', message: 'Yönetim kurulu toplantısı 15 Ocak\'ta planlandı.', time: '5 saat önce', read: true, type: 'info' },
+  ],
+  Board: [
+    { id: '1', title: 'Nihai Onay', message: '1 aday paketi nihai kurul onayı bekliyor.', time: '2 saat önce', read: false, type: 'info' },
+    { id: '2', title: 'Karar Kaydedildi', message: 'Önceki toplantı kararları sisteme işlendi.', time: '1 gün önce', read: true, type: 'success' },
+  ],
+  Admin: [
+    { id: '1', title: 'Sistem Uyarısı', message: 'YÖKSİS entegrasyonunda bağlantı zaman aşımı tespit edildi.', time: '5 dk önce', read: false, type: 'warning' },
+    { id: '2', title: 'Yeni Kullanıcı', message: '2 yeni personel hesabı oluşturuldu.', time: '3 saat önce', read: false, type: 'info' },
+    { id: '3', title: 'Yedekleme Tamamlandı', message: 'Günlük veritabanı yedeği başarıyla alındı.', time: '6 saat önce', read: true, type: 'success' },
+  ],
+};
 
 interface AppShellProps {
   user: User;
@@ -69,6 +117,26 @@ export function AppShell({
 }: AppShellProps) {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS[currentRole] || []);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
+  const markAsRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+  };
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  };
+
+  const getNotificationIcon = (type: Notification['type']) => {
+    switch (type) {
+      case 'success': return <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />;
+      case 'warning': return <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0" />;
+      default: return <Info className="w-4 h-4 text-blue-500 shrink-0" />;
+    }
+  };
 
   const navigationItems = NAVIGATION_ITEMS[currentRole] || [];
 
@@ -146,10 +214,64 @@ export function AppShell({
 
           <div className="flex items-center space-x-2">
             {/* Notifications */}
-            <button className="relative p-2 text-gray-400 hover:text-[#C00000] hover:bg-red-50 rounded-lg transition-all">
-              <Bell className="w-5 h-5" />
-              <span className="absolute top-2 right-2 w-2 h-2 rounded-full border-2 border-white bg-[#C00000]"></span>
-            </button>
+            <div className="relative">
+              <button
+                onClick={() => { setShowNotifications(!showNotifications); setShowUserMenu(false); }}
+                className="relative p-2 text-gray-400 hover:text-[#C00000] hover:bg-red-50 rounded-lg transition-all"
+              >
+                <Bell className="w-5 h-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[#C00000] text-white text-[10px] font-bold flex items-center justify-center border-2 border-white">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {showNotifications && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowNotifications(false)} />
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-2xl border border-gray-100 z-50 animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+                      <div className="text-sm font-bold text-gray-900">Bildirimler</div>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-[10px] font-bold text-[#C00000] hover:text-[#900000] uppercase tracking-wider transition-colors flex items-center gap-1"
+                        >
+                          <Check className="w-3 h-3" />
+                          Tümünü Oku
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-80 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="p-6 text-center text-sm text-gray-400">Bildirim bulunmuyor.</div>
+                      ) : (
+                        notifications.map((notif) => (
+                          <button
+                            key={notif.id}
+                            onClick={() => markAsRead(notif.id)}
+                            className={`w-full text-left px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors flex gap-3 ${
+                              !notif.read ? 'bg-red-50/40' : ''
+                            }`}
+                          >
+                            <div className="mt-0.5">{getNotificationIcon(notif.type)}</div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2">
+                                <span className={`text-xs font-bold truncate ${!notif.read ? 'text-gray-900' : 'text-gray-500'}`}>{notif.title}</span>
+                                {!notif.read && <span className="w-1.5 h-1.5 rounded-full bg-[#C00000] shrink-0" />}
+                              </div>
+                              <p className="text-[11px] text-gray-500 mt-0.5 line-clamp-2">{notif.message}</p>
+                              <span className="text-[10px] text-gray-400 mt-1 block">{notif.time}</span>
+                            </div>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* User Menu */}
             <div className="relative">
