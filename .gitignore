@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Vite cache
+.vite/
+
+# Logs
+*.log
+vite_output.log
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~
+
+# Environment files (do not commit secrets)
+.env
+.env.local
+.env.*.local
+
+# Working scratch
+**/_writetest.txt
+
+# Lockfile we are not using (project uses npm; pnpm-lock.yaml is stale)
+# Keeping it for now in case the team prefers pnpm. Uncomment to ignore:
+# pnpm-lock.yaml
